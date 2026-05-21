@@ -1,0 +1,1 @@
+Requires Raylib to work.
