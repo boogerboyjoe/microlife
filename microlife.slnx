@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="microlife/microlife.vcxproj" Id="c6083d3b-b305-4aa8-a66c-0a55e3150cd4" />
+</Solution>
