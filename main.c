@@ -1,0 +1,156 @@
+#include "raylib.h"
+#include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
+#include <math.h>
+
+#define TILE_SIZE 1
+#define CHUNK_SIZE 32
+#define CHUNK_NUMBER_X 40
+#define CHUNK_NUMBER_Y 40
+#define MAX_ORGANISMS 10000
+#define MAX_TILES_PER_ORGANISM 1000
+
+#define TOTAL_CHUNKS (CHUNK_NUMBER_X * CHUNK_NUMBER_Y)
+#define TILES_PER_CHUNK (CHUNK_SIZE * CHUNK_SIZE)
+#define WORLD_WIDTH  (CHUNK_NUMBER_X * CHUNK_SIZE)
+#define WORLD_HEIGHT (CHUNK_NUMBER_Y * CHUNK_SIZE)
+#define TOTAL_TILES  (WORLD_WIDTH * WORLD_HEIGHT)
+
+typedef struct {
+	unsigned short energy;
+	unsigned short tile_count;
+	unsigned char mutation_rate;
+	bool alive;
+}organism;
+
+typedef struct {
+	unsigned char type;
+	unsigned int id;
+}next_tile;
+
+typedef struct {
+	unsigned char type;
+	unsigned int id;
+}tile;
+
+typedef struct {
+	bool active;
+}chunk;
+
+typedef struct {
+	tile* tiles;
+	next_tile* next_tiles;
+	chunk* chunks;
+}world;
+
+world game_world;
+organism organisms[MAX_ORGANISMS];
+
+Image world_image;
+Color* world_pixels;
+Texture2D world_texture;
+
+void initialize_world(void) {
+	game_world.chunks = malloc(TOTAL_CHUNKS * sizeof(chunk));
+	game_world.tiles = malloc(TOTAL_TILES * sizeof(tile));
+	game_world.next_tiles = malloc(TOTAL_TILES * sizeof(next_tile));
+	for (int i = 0; i < TOTAL_TILES; i++) {
+		game_world.tiles[i].type = 1;
+		game_world.tiles[i].id = 0;
+		game_world.next_tiles[i].type = 0;
+		game_world.next_tiles[i].id = 0;
+	}
+}
+
+void uninitialize_world(void) {
+	free(game_world.next_tiles);
+	free(game_world.tiles);
+	free(game_world.chunks);
+}
+
+void draw_screen(void) {
+	Color tile_color = (Color){ 0, 0, 0, 0 };
+
+	for (int y = 0; y < WORLD_HEIGHT; y++) {
+		for (int x = 0; x < WORLD_WIDTH; x++) {
+			int tile_index = y * (WORLD_WIDTH)+x;
+			unsigned char type = game_world.tiles[tile_index].type;
+			// 0 = none, 1 = testcell, 2 = plantcell, 3 = deadplantcell
+
+			switch (type) {
+			case 0:
+				world_pixels[tile_index] = BLANK;
+				break;
+			case 1:
+				tile_color = (Color){ (unsigned char)(((float)x / WORLD_WIDTH) * 255), (unsigned char)(((float)y / WORLD_HEIGHT) * 255), 0, 255 };
+
+				world_pixels[tile_index] = tile_color;
+				break;
+			case 2:
+				tile_color = (Color){ 60, 170, 5, 255 };
+
+				world_pixels[tile_index] = tile_color;
+				break;
+			case 3:
+				tile_color = (Color){ 60, 70, 5, 255 };
+
+				world_pixels[tile_index] = tile_color;
+				break;
+			}
+		}
+	}
+}
+
+int main(void) {
+	clock_t start_time, stop_time;
+	double ms_elapsed;
+
+	initialize_world();
+
+	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+	InitWindow(1, 1, "MicroLife");
+
+	int monitor = GetCurrentMonitor();
+
+	int screen_width = GetMonitorWidth(monitor);
+	int screen_height = GetMonitorHeight(monitor);
+
+	SetWindowSize(screen_width / 2, screen_height / 2);
+
+	world_image = GenImageColor(WORLD_WIDTH, WORLD_HEIGHT, BLACK);
+
+	world_texture = LoadTextureFromImage(world_image);
+
+	world_pixels = (Color*)world_image.data;
+
+	SetTextureFilter(world_texture, TEXTURE_FILTER_POINT);
+
+	SetTargetFPS(60);
+	srand(time(NULL));
+
+	while (!WindowShouldClose()) {
+		start_time = clock();
+		BeginDrawing();
+
+		ClearBackground((Color) { 25, 25, 50, 255 });
+		draw_screen();
+
+		UpdateTexture(world_texture, world_pixels);
+
+		DrawTexturePro(world_texture, (Rectangle) { 0, 0, WORLD_WIDTH, WORLD_HEIGHT }, (Rectangle) { 0, 0, WORLD_WIDTH * TILE_SIZE, WORLD_HEIGHT * TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
+
+		stop_time = clock();
+		ms_elapsed = ((stop_time - start_time) * 1000.0 / CLOCKS_PER_SEC);
+		printf("%f MS Elapsed Per Frame\n", ms_elapsed);
+		EndDrawing();
+	}
+
+	UnloadTexture(world_texture);
+	UnloadImage(world_image);
+
+	uninitialize_world();
+	
+	CloseWindow();
+	return 0;
+}
