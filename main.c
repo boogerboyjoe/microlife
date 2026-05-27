@@ -6,8 +6,8 @@
 
 #define TILE_SIZE 1
 #define CHUNK_SIZE 32
-#define CHUNK_NUMBER_X 40
-#define CHUNK_NUMBER_Y 40
+#define CHUNK_NUMBER_X 35
+#define CHUNK_NUMBER_Y 35
 #define MAX_ORGANISMS 10000
 #define MAX_TILES_PER_ORGANISM 1000
 
@@ -56,8 +56,12 @@ void initialize_world(void) {
 	game_world.tiles = malloc(TOTAL_TILES * sizeof(tile));
 	game_world.next_tiles = malloc(TOTAL_TILES * sizeof(next_tile));
 	for (int i = 0; i < TOTAL_TILES; i++) {
-		game_world.tiles[i].type = 1;
+		game_world.tiles[i].type = 0;
 		game_world.tiles[i].id = 0;
+		if (i == (WORLD_HEIGHT/2) * WORLD_WIDTH + (WORLD_WIDTH/2)) {
+			game_world.tiles[i].type = 2;
+			game_world.tiles[i].id = 0;
+		}
 		game_world.next_tiles[i].type = 0;
 		game_world.next_tiles[i].id = 0;
 	}
@@ -67,6 +71,61 @@ void uninitialize_world(void) {
 	free(game_world.next_tiles);
 	free(game_world.tiles);
 	free(game_world.chunks);
+}
+
+void update_world(void) {
+	for (int y = 0; y < WORLD_HEIGHT; y++) {
+		for (int x = 0; x < WORLD_WIDTH; x++) {
+			int tile_index = y * (WORLD_WIDTH)+x;
+			unsigned char type = game_world.tiles[tile_index].type;
+			unsigned int id = game_world.tiles[tile_index].id;
+
+			switch (type) {
+				case 2:
+					for (int i = 0; i < 3; i++) {
+						unsigned char expand_direction = rand() % 4;
+						// 0 = up, 1 = right, 2 = down, 3 = left
+
+						int new_y = y;
+						int new_x = x;
+
+						switch (expand_direction) {
+							case 0:
+								new_y = y - 1;
+								break;
+							case 1:
+								new_x = x + 1;
+								break;
+							case 2:
+								new_y = y + 1;
+								break;
+							default:
+								new_x = x - 1; 
+						}
+						if (new_x >= 0 && new_x < WORLD_WIDTH && new_y >= 0 && new_y < WORLD_HEIGHT) {
+							int new_tile_index = new_y * (WORLD_WIDTH)+ new_x;
+							unsigned char next_type = game_world.next_tiles[new_tile_index].type;
+
+							if (next_type == 0) {
+								game_world.next_tiles[new_tile_index].type = type;
+								game_world.next_tiles[new_tile_index].id = id;
+							}
+							i = 3;
+						}
+					}
+					break;
+				case 3:
+					
+					break;
+			}
+		}
+	}
+	for (int i = 0; i < TOTAL_TILES; i++) {
+		game_world.tiles[i].type = game_world.next_tiles[i].type;
+		game_world.tiles[i].id = game_world.next_tiles[i].id;
+		game_world.next_tiles[i].type = 0;
+		game_world.next_tiles[i].id = 0;
+	}
 }
 
 void draw_screen(void) {
@@ -126,11 +185,14 @@ int main(void) {
 
 	SetTextureFilter(world_texture, TEXTURE_FILTER_POINT);
 
-	SetTargetFPS(60);
+	SetTargetFPS(20);
 	srand(time(NULL));
 
 	while (!WindowShouldClose()) {
 		start_time = clock();
+
+		update_world();
+
 		BeginDrawing();
 
 		ClearBackground((Color) { 25, 25, 50, 255 });
