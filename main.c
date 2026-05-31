@@ -92,15 +92,16 @@ void update_world(void) {
 			int age = game_world.tiles[tile_index].age;
 			int energy = game_world.tiles[tile_index].energy;
 			int max_age = 0;
+			bool has_moved = false;
 			switch (type) {
 				case 2:
 					max_age = MAX_PLANT_AGE;
 					break;
 				case 4:
-					max_age = MAX_MEAT_AGE * 8;
+					max_age = MAX_MEAT_AGE * 7;
 					break;
 				case 5:
-					max_age = MAX_MEAT_AGE * 12;
+					max_age = MAX_MEAT_AGE * 24;
 					break;
 				case 6:
 					max_age = MAX_MEAT_AGE;
@@ -134,7 +135,7 @@ void update_world(void) {
 								unsigned char next_type = game_world.tiles[new_tile_index].type;
 
 								if (next_type == 0) {
-									unsigned int mutation_chance = rand() % 512;
+									unsigned int mutation_chance = rand() % 4096;
 									if (mutation_chance == 0) {
 										game_world.next_tiles[new_tile_index].type = 6;
 									}
@@ -184,12 +185,14 @@ void update_world(void) {
 								unsigned char next_type = game_world.tiles[new_tile_index].type;
 
 								if (next_type == 0) {
+									has_moved = true;
 									game_world.next_tiles[new_tile_index].type = type;
 									//game_world.next_tiles[new_tile_index].id = id;
 									game_world.next_tiles[new_tile_index].age = age + 1;
 									i = 3;
 								} else if (next_type == 2 || next_type == 3) {
-									unsigned int mutation_chance = rand() % 512;
+									has_moved = true;
+									unsigned int mutation_chance = rand() % 4096;
 									if (mutation_chance == 0) {
 										game_world.next_tiles[new_tile_index].type = 5;
 									}
@@ -210,6 +213,9 @@ void update_world(void) {
 									i = 3;
 								}
 							}
+						}
+						if (has_moved == false) {
+							game_world.next_tiles[tile_index].type = type;
 						}
 						break;
 					case 5:
@@ -238,12 +244,14 @@ void update_world(void) {
 								unsigned char next_type = game_world.tiles[new_tile_index].type;
 
 								if (next_type == 0) {
+									has_moved = true;
 									game_world.next_tiles[new_tile_index].type = type;
 									//game_world.next_tiles[new_tile_index].id = id;
 									game_world.next_tiles[new_tile_index].age = age + 1;
 									i = 3;
 								}
 								else if (next_type == 4 || next_type == 6) {
+									has_moved = true;
 									game_world.next_tiles[tile_index].type = type;
 									//game_world.next_tiles[tile_index].id = id;
 									game_world.next_tiles[tile_index].age = 0;
@@ -253,6 +261,9 @@ void update_world(void) {
 									i = 3;
 								}
 							}
+						}
+						if (has_moved == false) {
+							game_world.next_tiles[tile_index].type = type;
 						}
 						break;
 					case 6:
@@ -281,13 +292,15 @@ void update_world(void) {
 								unsigned char next_type = game_world.tiles[new_tile_index].type;
 
 								if (next_type == 0) {
+									has_moved = true;
 									game_world.next_tiles[new_tile_index].type = type;
 									//game_world.next_tiles[new_tile_index].id = id;
 									game_world.next_tiles[new_tile_index].age = age + 1;
 									i = 3;
 								}
 								else if (next_type == 3) {
-									unsigned int mutation_chance = rand() % 512;
+									has_moved = true;
+									unsigned int mutation_chance = rand() % 4096;
 									if (mutation_chance == 0) {
 										game_world.next_tiles[tile_index].type = 4;
 									}
@@ -302,6 +315,9 @@ void update_world(void) {
 									i = 3;
 								}
 							}
+						}
+						if (has_moved == false) {
+							game_world.next_tiles[tile_index].type = type;
 						}
 						break;
 
@@ -404,7 +420,7 @@ int main(void) {
 
 	SetTextureFilter(world_texture, TEXTURE_FILTER_POINT);
 
-	SetTargetFPS(20);
+	SetTargetFPS(60);
 	srand(time(NULL));
 
 	while (!WindowShouldClose()) {
