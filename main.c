@@ -11,7 +11,7 @@
 #define MAX_ORGANISMS 10000
 #define MAX_TILES_PER_ORGANISM 1000
 #define MAX_PLANT_AGE 1
-#define MAX_MEAT_AGE 5
+#define MAX_MEAT_AGE 4
 
 #define TOTAL_CHUNKS (CHUNK_NUMBER_X * CHUNK_NUMBER_Y)
 #define TILES_PER_CHUNK (CHUNK_SIZE * CHUNK_SIZE)
@@ -98,10 +98,10 @@ void update_world(void) {
 					max_age = MAX_PLANT_AGE;
 					break;
 				case 4:
-					max_age = MAX_MEAT_AGE * 7;
+					max_age = MAX_MEAT_AGE * 6;
 					break;
 				case 5:
-					max_age = MAX_MEAT_AGE * 24;
+					max_age = MAX_MEAT_AGE * 4;
 					break;
 				case 6:
 					max_age = MAX_MEAT_AGE;
@@ -134,7 +134,7 @@ void update_world(void) {
 								int new_tile_index = new_y * (WORLD_WIDTH)+new_x;
 								unsigned char next_type = game_world.tiles[new_tile_index].type;
 
-								if (next_type == 0) {
+								if (next_type == 0 && game_world.next_tiles[new_tile_index].type == 0) {
 									unsigned int mutation_chance = rand() % 4096;
 									if (mutation_chance == 0) {
 										game_world.next_tiles[new_tile_index].type = 6;
@@ -184,7 +184,7 @@ void update_world(void) {
 								int new_tile_index = new_y * (WORLD_WIDTH)+new_x;
 								unsigned char next_type = game_world.tiles[new_tile_index].type;
 
-								if (next_type == 0) {
+								if (next_type == 0 && game_world.next_tiles[new_tile_index].type == 0) {
 									has_moved = true;
 									game_world.next_tiles[new_tile_index].type = type;
 									//game_world.next_tiles[new_tile_index].id = id;
@@ -243,7 +243,7 @@ void update_world(void) {
 								int new_tile_index = new_y * (WORLD_WIDTH)+new_x;
 								unsigned char next_type = game_world.tiles[new_tile_index].type;
 
-								if (next_type == 0) {
+								if (next_type == 0 && game_world.next_tiles[new_tile_index].type == 0) {
 									has_moved = true;
 									game_world.next_tiles[new_tile_index].type = type;
 									//game_world.next_tiles[new_tile_index].id = id;
@@ -264,6 +264,8 @@ void update_world(void) {
 						}
 						if (has_moved == false) {
 							game_world.next_tiles[tile_index].type = type;
+							game_world.next_tiles[tile_index].age = age + 1;
+							game_world.next_tiles[tile_index].energy = energy;
 						}
 						break;
 					case 6:
@@ -291,7 +293,7 @@ void update_world(void) {
 								int new_tile_index = new_y * (WORLD_WIDTH)+new_x;
 								unsigned char next_type = game_world.tiles[new_tile_index].type;
 
-								if (next_type == 0) {
+								if (next_type == 0 && game_world.next_tiles[new_tile_index].type == 0) {
 									has_moved = true;
 									game_world.next_tiles[new_tile_index].type = type;
 									//game_world.next_tiles[new_tile_index].id = id;
