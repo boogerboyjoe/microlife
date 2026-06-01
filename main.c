@@ -113,7 +113,7 @@ void update_world(void) {
 					max_age = MAX_MEAT_AGE * 7;
 					break;
 				case 5:
-					max_age = MAX_MEAT_AGE * 18;
+					max_age = MAX_MEAT_AGE * 20;
 					break;
 				case 6:
 					max_age = MAX_MEAT_AGE;
