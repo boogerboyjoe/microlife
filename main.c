@@ -19,23 +19,16 @@
 #define WORLD_HEIGHT (CHUNK_NUMBER_Y * CHUNK_SIZE)
 #define TOTAL_TILES  (WORLD_WIDTH * WORLD_HEIGHT)
 
-//typedef struct {
-	//unsigned short energy;
-	//unsigned short tile_count;
-	//unsigned char mutation_rate;
-	//bool alive;
-//}organism;
+bool debug = true;
 
 typedef struct {
 	unsigned char type;
-	//unsigned int id;
 	int age;
 	unsigned char energy;
 }next_tile;
 
 typedef struct {
 	unsigned char type;
-	//unsigned int id;
 	int age;
 	unsigned char energy;
 }tile;
@@ -51,11 +44,13 @@ typedef struct {
 }world;
 
 world game_world;
-//organism organisms[MAX_ORGANISMS];
 
 Image world_image;
 Color* world_pixels;
 Texture2D world_texture;
+
+int ui_sizing = 0;
+int sim_speed = 10;
 
 void initialize_world(void) {
 	game_world.chunks = malloc(TOTAL_CHUNKS * sizeof(chunk));
@@ -63,15 +58,12 @@ void initialize_world(void) {
 	game_world.next_tiles = malloc(TOTAL_TILES * sizeof(next_tile));
 	for (int i = 0; i < TOTAL_TILES; i++) {
 		game_world.tiles[i].type = 0;
-		//game_world.tiles[i].id = 0;
 		game_world.tiles[i].age = 0;
 		game_world.tiles[i].energy = 0;
 		if (i == (WORLD_HEIGHT/2) * WORLD_WIDTH + (WORLD_WIDTH/2)) {
 			game_world.tiles[i].type = 2;
-			//game_world.tiles[i].id = 0;
 		}
 		game_world.next_tiles[i].type = 0;
-		//game_world.next_tiles[i].id = 0;
 		game_world.next_tiles[i].age = 0;
 		game_world.next_tiles[i].energy = 0;
 	}
@@ -416,9 +408,15 @@ void draw_screen(void) {
 	}
 }
 
+void draw_ui(int current_screen_width, int current_screen_height, double fps) {
+	ui_sizing = current_screen_height * 0.1;
+	char* fps_text = TextFormat("%.1lf fps selected", fps);
+	DrawText(fps_text, current_screen_width * 0.05, current_screen_height - ui_sizing, 0.4 * ui_sizing, LIGHTGRAY);
+	DrawText("Q and E to change simulation FPS", current_screen_width * 0.05, current_screen_height - 0.45 * ui_sizing, 0.4 * ui_sizing, GRAY);
+}
+
 int main(void) {
-	clock_t start_time, stop_time;
-	double ms_elapsed;
+	double time_passed = 0;
 
 	initialize_world();
 
@@ -433,8 +431,6 @@ int main(void) {
 	int current_screen_width = GetScreenWidth();
 	int current_screen_height = GetScreenHeight();
 
-	int ui_sizing = 0;
-
 	world_image = GenImageColor(WORLD_WIDTH, WORLD_HEIGHT, BLACK);
 
 	world_texture = LoadTextureFromImage(world_image);
@@ -443,34 +439,47 @@ int main(void) {
 
 	SetTextureFilter(world_texture, TEXTURE_FILTER_POINT);
 
-	SetTargetFPS(60);
+	SetTargetFPS(240);
+
+	double fps = 60.0;
+
 	srand(time(NULL));
 
 	while (!WindowShouldClose()) {
-		start_time = clock();
 		if (IsWindowResized()) {
 			current_screen_width = GetScreenWidth();
 			current_screen_height = GetScreenHeight();
 		}
-		update_world();
 
 		BeginDrawing();
+		time_passed += GetFrameTime();
+		if (time_passed > 1.0 / fps) {
+			time_passed -= 1.0 / fps;
+			update_world();
+		}
 
 		ClearBackground((Color) { 25, 25, 50, 255 });
 		draw_screen();
-
 		UpdateTexture(world_texture, world_pixels);
-
 		DrawTexturePro(world_texture, (Rectangle) { 0, 0, WORLD_WIDTH, WORLD_HEIGHT }, (Rectangle) { 0, 0, WORLD_WIDTH * TILE_SIZE, WORLD_HEIGHT * TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
 
-		// GUI
-		//ui_sizing = current_screen_height * 0.1;
-		//DrawRectangle(9 * (current_screen_width * 0.1), 1 * ui_sizing, 0.5 * ui_sizing, 3 * ui_sizing, (Color){ 0, 0, 0, 200});
-		//DrawRectangle(9 * (current_screen_width * 0.1) + (0.2 * ui_sizing), 1.2 * ui_sizing, 0.1 * ui_sizing, 2.6 * (current_screen_height * 0.1), (Color) { 100, 150, 255, 255 });
+		if (IsKeyPressed(KEY_Q) && fps > 10.0) {
+			fps -= 10.0;
+		}
+		else if (IsKeyPressed(KEY_Q) && fps > 1.0) {
+			fps -= 1.0;
+		}
+		if (IsKeyPressed(KEY_E) && fps > 9.0) {
+			fps += 10.0;
+		}
+		else if (IsKeyPressed(KEY_E)) {
+			fps += 1.0;
+		}
 
-		stop_time = clock();
-		ms_elapsed = ((stop_time - start_time) * 1000.0 / CLOCKS_PER_SEC);
-		printf("%f MS Elapsed Per Frame\n", ms_elapsed);
+		draw_ui(current_screen_width, current_screen_height, fps);
+		if (debug == true) {
+			printf("%f Seconds Elapsed Per Frame\n", GetFrameTime());
+		}
 		EndDrawing();
 	}
 
