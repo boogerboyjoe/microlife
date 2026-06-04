@@ -19,7 +19,7 @@
 #define WORLD_HEIGHT (CHUNK_NUMBER_Y * CHUNK_SIZE)
 #define TOTAL_TILES  (WORLD_WIDTH * WORLD_HEIGHT)
 
-bool debug = true;
+bool debug = false;
 
 typedef struct {
 	unsigned char type;
@@ -50,7 +50,6 @@ Color* world_pixels;
 Texture2D world_texture;
 
 int ui_sizing = 0;
-int sim_speed = 10;
 
 void initialize_world(void) {
 	game_world.chunks = malloc(TOTAL_CHUNKS * sizeof(chunk));
