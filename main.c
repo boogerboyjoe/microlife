@@ -408,8 +408,11 @@ void draw_screen(void) {
 	}
 }
 
-void draw_ui(int current_screen_width, int current_screen_height) {
+void draw_ui(int current_screen_width, int current_screen_height, double fps) {
 	ui_sizing = current_screen_height * 0.1;
+	char* fps_text = TextFormat("%.1lf fps selected", fps);
+	DrawText(fps_text, current_screen_width * 0.05, current_screen_height - ui_sizing, 0.4 * ui_sizing, LIGHTGRAY);
+	DrawText("Q and E to change simulation FPS", current_screen_width * 0.05, current_screen_height - 0.45 * ui_sizing, 0.4 * ui_sizing, GRAY);
 }
 
 int main(void) {
@@ -460,7 +463,20 @@ int main(void) {
 		UpdateTexture(world_texture, world_pixels);
 		DrawTexturePro(world_texture, (Rectangle) { 0, 0, WORLD_WIDTH, WORLD_HEIGHT }, (Rectangle) { 0, 0, WORLD_WIDTH * TILE_SIZE, WORLD_HEIGHT * TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
 
-		draw_ui(current_screen_width, current_screen_height);
+		if (IsKeyPressed(KEY_Q) && fps > 10.0) {
+			fps -= 10.0;
+		}
+		else if (IsKeyPressed(KEY_Q) && fps > 1.0) {
+			fps -= 1.0;
+		}
+		if (IsKeyPressed(KEY_E) && fps > 9.0) {
+			fps += 10.0;
+		}
+		else if (IsKeyPressed(KEY_E)) {
+			fps += 1.0;
+		}
+
+		draw_ui(current_screen_width, current_screen_height, fps);
 		if (debug == true) {
 			printf("%f Seconds Elapsed Per Frame\n", GetFrameTime());
 		}
