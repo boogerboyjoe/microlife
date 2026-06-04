@@ -121,7 +121,7 @@ void update_world(void) {
 			int energy = game_world.tiles[tile_index].energy;
 			int max_age = 0;
 			bool has_moved = false;
-			// 0 = none, 1 = testcell, 2 = plantcell, 3 = deadplantcell, 4 = herbavore, 5 = carnavore, 6 = decomposer
+			// 0 = none, 1 = testcell, 2 = plantcell, 3 = deadplantcell, 4 = herbivore, 5 = carnivore, 6 = decomposer
 			switch (type) {
 				case 2:
 					max_age = MAX_PLANT_AGE * 4;
@@ -356,7 +356,7 @@ void draw_screen(void) {
 		for (int x = 0; x < WORLD_WIDTH; x++) {
 			int tile_index = y * (WORLD_WIDTH)+x;
 			unsigned char type = game_world.tiles[tile_index].type;
-			// 0 = none, 1 = testcell, 2 = plantcell, 3 = deadplantcell, 4 = herbavore, 5 = carnavore, 6 = decomposer
+			// 0 = none, 1 = testcell, 2 = plantcell, 3 = deadplantcell, 4 = herbivore, 5 = carnivore, 6 = decomposer
 
 			switch (type) {
 			case 0:
@@ -441,14 +441,13 @@ int main(void) {
 		}
 
 		BeginDrawing();
+		ClearBackground((Color) { 25, 25, 50, 255 });
 		time_passed += GetFrameTime();
 		if (time_passed > 1.0 / fps) {
 			time_passed -= 1.0 / fps;
 			update_world();
+			draw_screen();
 		}
-
-		ClearBackground((Color) { 25, 25, 50, 255 });
-		draw_screen();
 		UpdateTexture(world_texture, world_pixels);
 		DrawTexturePro(world_texture, (Rectangle) { 0, 0, WORLD_WIDTH, WORLD_HEIGHT }, (Rectangle) { 0, 0, WORLD_WIDTH * TILE_SIZE, WORLD_HEIGHT * TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
 
