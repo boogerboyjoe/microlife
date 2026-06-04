@@ -19,13 +19,7 @@
 #define WORLD_HEIGHT (CHUNK_NUMBER_Y * CHUNK_SIZE)
 #define TOTAL_TILES  (WORLD_WIDTH * WORLD_HEIGHT)
 
-bool debug = true;
-
-typedef struct {
-	unsigned char type;
-	int age;
-	unsigned char energy;
-}next_tile;
+bool debug = false;
 
 typedef struct {
 	unsigned char type;
@@ -39,7 +33,7 @@ typedef struct {
 
 typedef struct {
 	tile* tiles;
-	next_tile* next_tiles;
+	tile* next_tiles;
 	chunk* chunks;
 }world;
 
@@ -50,12 +44,11 @@ Color* world_pixels;
 Texture2D world_texture;
 
 int ui_sizing = 0;
-int sim_speed = 10;
 
 void initialize_world(void) {
 	game_world.chunks = malloc(TOTAL_CHUNKS * sizeof(chunk));
 	game_world.tiles = malloc(TOTAL_TILES * sizeof(tile));
-	game_world.next_tiles = malloc(TOTAL_TILES * sizeof(next_tile));
+	game_world.next_tiles = malloc(TOTAL_TILES * sizeof(tile));
 	for (int i = 0; i < TOTAL_TILES; i++) {
 		game_world.tiles[i].type = 0;
 		game_world.tiles[i].age = 0;
@@ -350,14 +343,10 @@ void update_world(void) {
 			}
 		}
 	}
-	for (int i = 0; i < TOTAL_TILES; i++) {
-		game_world.tiles[i].type = game_world.next_tiles[i].type;
-		game_world.tiles[i].age = game_world.next_tiles[i].age;
-		game_world.tiles[i].energy = game_world.next_tiles[i].energy;
-		game_world.next_tiles[i].type = 0;
-		game_world.next_tiles[i].age = 0;
-		game_world.next_tiles[i].energy = 0;
-	}
+	tile* temp = game_world.tiles;
+	game_world.tiles = game_world.next_tiles;
+	game_world.next_tiles = temp;
+	memset(game_world.next_tiles, 0, TOTAL_TILES * sizeof(tile));
 }
 
 void draw_screen(void) {
@@ -439,7 +428,7 @@ int main(void) {
 
 	SetTextureFilter(world_texture, TEXTURE_FILTER_POINT);
 
-	SetTargetFPS(240);
+	SetTargetFPS(560);
 
 	double fps = 60.0;
 
