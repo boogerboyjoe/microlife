@@ -19,7 +19,7 @@
 #define WORLD_HEIGHT (CHUNK_NUMBER_Y * CHUNK_SIZE)
 #define TOTAL_TILES  (WORLD_WIDTH * WORLD_HEIGHT)
 
-bool debug = false;
+bool debug = true;
 
 typedef struct {
 	unsigned char type;
@@ -436,7 +436,10 @@ int main(void) {
 
 	SetTextureFilter(world_texture, TEXTURE_FILTER_POINT);
 
-	SetTargetFPS(60);
+	SetTargetFPS(240);
+
+	double fps = 60.0;
+
 	srand(time(NULL));
 
 	while (!WindowShouldClose()) {
@@ -447,8 +450,8 @@ int main(void) {
 
 		BeginDrawing();
 		time_passed += GetFrameTime();
-		if (time_passed > 0.05) {
-			time_passed = 0;
+		if (time_passed > 1.0 / fps) {
+			time_passed -= 1.0 / fps;
 			update_world();
 		}
 
