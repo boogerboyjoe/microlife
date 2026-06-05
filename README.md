@@ -1,1 +1,1 @@
-Requires Raylib to work. (If your compiling it yourself which is in no way reccomended)
+A game inspired by life-engine and conway's game of life. This was originally supposed to be a direct life-engine clone but faster as an app, however after developing and optimizing the engine, I decided to settle on a smaller scoped idea for this repository. I might use the engine from this project to continue my original goal sometime in the future, but I give permission to anyone who wants to use this engine to do the same if they want.
