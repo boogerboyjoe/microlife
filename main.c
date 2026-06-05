@@ -4,7 +4,6 @@
 #include <time.h>
 #include <math.h>
 
-#define TILE_SIZE 4
 #define CHUNK_SIZE 16
 #define CHUNK_NUMBER_X 16
 #define CHUNK_NUMBER_Y 16
@@ -19,7 +18,7 @@
 #define WORLD_HEIGHT (CHUNK_NUMBER_Y * CHUNK_SIZE)
 #define TOTAL_TILES  (WORLD_WIDTH * WORLD_HEIGHT)
 
-bool debug = false;
+bool debug = true;
 
 typedef struct {
 	unsigned char type;
@@ -392,6 +391,11 @@ void draw_screen(void) {
 
 				world_pixels[tile_index] = tile_color;
 				break;
+			case 7:
+				tile_color = (Color){ 50, 50, 50, 255 };
+
+				world_pixels[tile_index] = tile_color;
+				break;
 			}
 		}
 	}
@@ -406,6 +410,9 @@ void draw_ui(int current_screen_width, int current_screen_height, double fps) {
 
 int main(void) {
 	double time_passed = 0;
+	float tile_size = 4.0f;
+	double x_pos = 0.0;
+	double y_pos = 0.0;
 
 	initialize_world();
 
@@ -428,8 +435,6 @@ int main(void) {
 
 	SetTextureFilter(world_texture, TEXTURE_FILTER_POINT);
 
-	SetTargetFPS(560);
-
 	double fps = 60.0;
 
 	srand(time(NULL));
@@ -449,7 +454,7 @@ int main(void) {
 			draw_screen();
 		}
 		UpdateTexture(world_texture, world_pixels);
-		DrawTexturePro(world_texture, (Rectangle) { 0, 0, WORLD_WIDTH, WORLD_HEIGHT }, (Rectangle) { 0, 0, WORLD_WIDTH * TILE_SIZE, WORLD_HEIGHT * TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
+		DrawTexturePro(world_texture, (Rectangle) { 0, 0, WORLD_WIDTH, WORLD_HEIGHT }, (Rectangle) { x_pos, y_pos, WORLD_WIDTH * tile_size, WORLD_HEIGHT * tile_size}, (Vector2) { 0, 0 }, 0.0f, WHITE);
 
 		if (IsKeyPressed(KEY_Q) && fps > 10.0) {
 			fps -= 10.0;
@@ -462,6 +467,28 @@ int main(void) {
 		}
 		else if (IsKeyPressed(KEY_E)) {
 			fps += 1.0;
+		}
+
+		if (IsKeyDown(KEY_W)) {
+			y_pos += 6;
+		}
+		if (IsKeyDown(KEY_S)) {
+			y_pos -= 6;
+		}
+		if (IsKeyDown(KEY_A)) {
+			x_pos += 6;
+		}
+		if (IsKeyDown(KEY_D)) {
+			x_pos -= 6;
+		}
+		if (GetMouseWheelMoveV().y != 0) {
+			float old_tile_size = tile_size;
+			tile_size += GetMouseWheelMoveV().y * 3.0f;
+			if (tile_size < 4.0f) tile_size = 4.0f;
+
+			float actual_delta = tile_size - old_tile_size;
+			x_pos -= (actual_delta / old_tile_size) * (GetMousePosition().x - x_pos);
+			y_pos -= (actual_delta / old_tile_size) * (GetMousePosition().y - y_pos);
 		}
 
 		draw_ui(current_screen_width, current_screen_height, fps);
