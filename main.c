@@ -4,7 +4,6 @@
 #include <time.h>
 #include <math.h>
 
-#define TILE_SIZE 4
 #define CHUNK_SIZE 16
 #define CHUNK_NUMBER_X 16
 #define CHUNK_NUMBER_Y 16
@@ -25,12 +24,6 @@ typedef struct {
 	unsigned char type;
 	int age;
 	unsigned char energy;
-}next_tile;
-
-typedef struct {
-	unsigned char type;
-	int age;
-	unsigned char energy;
 }tile;
 
 typedef struct {
@@ -39,7 +32,7 @@ typedef struct {
 
 typedef struct {
 	tile* tiles;
-	next_tile* next_tiles;
+	tile* next_tiles;
 	chunk* chunks;
 }world;
 
@@ -54,7 +47,7 @@ int ui_sizing = 0;
 void initialize_world(void) {
 	game_world.chunks = malloc(TOTAL_CHUNKS * sizeof(chunk));
 	game_world.tiles = malloc(TOTAL_TILES * sizeof(tile));
-	game_world.next_tiles = malloc(TOTAL_TILES * sizeof(next_tile));
+	game_world.next_tiles = malloc(TOTAL_TILES * sizeof(tile));
 	for (int i = 0; i < TOTAL_TILES; i++) {
 		game_world.tiles[i].type = 0;
 		game_world.tiles[i].age = 0;
@@ -121,13 +114,17 @@ void update_world(void) {
 		for (int x = 0; x < WORLD_WIDTH; x++) {
 			int tile_index = y * (WORLD_WIDTH)+x;
 			unsigned char type = game_world.tiles[tile_index].type;
+			if (type == 7 || type == 1) {
+				game_world.next_tiles[tile_index] = game_world.tiles[tile_index];
+				continue;
+			}
 			if (type == 0) continue;
 			if (game_world.next_tiles[tile_index].type != 0) continue;
 			int age = game_world.tiles[tile_index].age;
 			int energy = game_world.tiles[tile_index].energy;
 			int max_age = 0;
 			bool has_moved = false;
-			// 0 = none, 1 = testcell, 2 = plantcell, 3 = deadplantcell, 4 = herbavore, 5 = carnavore, 6 = decomposer
+			// 0 = none, 1 = testcell, 2 = plantcell, 3 = deadplantcell, 4 = herbivore, 5 = carnivore, 6 = decomposer
 			switch (type) {
 				case 2:
 					max_age = MAX_PLANT_AGE * 4;
@@ -349,60 +346,67 @@ void update_world(void) {
 			}
 		}
 	}
-	for (int i = 0; i < TOTAL_TILES; i++) {
-		game_world.tiles[i].type = game_world.next_tiles[i].type;
-		game_world.tiles[i].age = game_world.next_tiles[i].age;
-		game_world.tiles[i].energy = game_world.next_tiles[i].energy;
-		game_world.next_tiles[i].type = 0;
-		game_world.next_tiles[i].age = 0;
-		game_world.next_tiles[i].energy = 0;
-	}
+	tile* temp = game_world.tiles;
+	game_world.tiles = game_world.next_tiles;
+	game_world.next_tiles = temp;
+	memset(game_world.next_tiles, 0, TOTAL_TILES * sizeof(tile));
 }
 
-void draw_screen(void) {
+Vector2 get_mouse_tile(double x_pos, double y_pos, double tile_size) {
+	int mouse_x = (int)((GetMousePosition().x - x_pos) / tile_size);
+	int mouse_y = (int)((GetMousePosition().y - y_pos) / tile_size);
+
+	if (mouse_x < 0) mouse_x = 0;
+	if (mouse_y < 0) mouse_y = 0;
+	if (mouse_x >= WORLD_WIDTH) mouse_x = WORLD_WIDTH - 1;
+	if (mouse_y >= WORLD_HEIGHT) mouse_y = WORLD_HEIGHT - 1;
+	return (Vector2) { mouse_x, mouse_y };
+}
+
+void draw_screen(double x_pos, double y_pos, double tile_size) {
 	Color tile_color = (Color){ 0, 0, 0, 0 };
+	Vector2 tile_sel = {get_mouse_tile(x_pos, y_pos, tile_size).x, get_mouse_tile(x_pos, y_pos, tile_size).y};
+	int tile_sel_index = (int) tile_sel.y * WORLD_WIDTH + (int) tile_sel.x;
 
 	for (int y = 0; y < WORLD_HEIGHT; y++) {
 		for (int x = 0; x < WORLD_WIDTH; x++) {
-			int tile_index = y * (WORLD_WIDTH)+x;
+			int tile_index = y * WORLD_WIDTH + x;
 			unsigned char type = game_world.tiles[tile_index].type;
-			// 0 = none, 1 = testcell, 2 = plantcell, 3 = deadplantcell, 4 = herbavore, 5 = carnavore, 6 = decomposer
+			// 0 = none, 1 = testcell, 2 = plantcell, 3 = deadplantcell, 4 = herbivore, 5 = carnivore, 6 = decomposer
 
 			switch (type) {
 			case 0:
-				world_pixels[tile_index] = BLANK;
+				tile_color = BLANK;
 				break;
 			case 1:
 				tile_color = (Color){ (unsigned char)(((float)x / WORLD_WIDTH) * 255), (unsigned char)(((float)y / WORLD_HEIGHT) * 255), 0, 255 };
-
-				world_pixels[tile_index] = tile_color;
 				break;
 			case 2:
 				tile_color = (Color){ 60, 170, 5, 255 };
-
-				world_pixels[tile_index] = tile_color;
 				break;
 			case 3:
 				tile_color = (Color){ 60, 70, 5, 255 };
-
-				world_pixels[tile_index] = tile_color;
 				break;
 			case 4:
 				tile_color = (Color){ 60, 150, 80, 255 };
-
-				world_pixels[tile_index] = tile_color;
 				break;
 			case 5:
 				tile_color = (Color){ 160, 60, 5, 255 };
-
-				world_pixels[tile_index] = tile_color;
 				break;
 			case 6:
 				tile_color = (Color){ 140, 120, 5, 255 };
-
-				world_pixels[tile_index] = tile_color;
+				break;
+			case 7:
+				tile_color = (Color){ 50, 50, 50, 255 };
 				break;
 			}
+			if (tile_index == tile_sel_index) {
+				tile_color.r = (tile_color.r > 205) ? 255 : tile_color.r + 50;
+				tile_color.g = (tile_color.g > 205) ? 255 : tile_color.g + 50;
+				tile_color.b = (tile_color.b > 205) ? 255 : tile_color.b + 50;
+				tile_color.a = 255;
+			}
+			world_pixels[tile_index] = tile_color;
 		}
 	}
 }
@@ -416,6 +420,10 @@ void draw_ui(int current_screen_width, int current_screen_height, double fps) {
 
 int main(void) {
 	double time_passed = 0;
+	double tile_size = 4.0;
+	int brush_size = 0;
+	double x_pos = 0.0;
+	double y_pos = 0.0;
 
 	initialize_world();
 
@@ -438,8 +446,6 @@ int main(void) {
 
 	SetTextureFilter(world_texture, TEXTURE_FILTER_POINT);
 
-	SetTargetFPS(240);
-
 	double fps = 60.0;
 
 	srand(time(NULL));
@@ -449,18 +455,6 @@ int main(void) {
 			current_screen_width = GetScreenWidth();
 			current_screen_height = GetScreenHeight();
 		}
-
-		BeginDrawing();
-		time_passed += GetFrameTime();
-		if (time_passed > 1.0 / fps) {
-			time_passed -= 1.0 / fps;
-			update_world();
-		}
-
-		ClearBackground((Color) { 25, 25, 50, 255 });
-		draw_screen();
-		UpdateTexture(world_texture, world_pixels);
-		DrawTexturePro(world_texture, (Rectangle) { 0, 0, WORLD_WIDTH, WORLD_HEIGHT }, (Rectangle) { 0, 0, WORLD_WIDTH * TILE_SIZE, WORLD_HEIGHT * TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
 
 		if (IsKeyPressed(KEY_Q) && fps > 10.0) {
 			fps -= 10.0;
@@ -474,6 +468,51 @@ int main(void) {
 		else if (IsKeyPressed(KEY_E)) {
 			fps += 1.0;
 		}
+
+		if (IsKeyDown(KEY_W)) {
+			y_pos += 600 * GetFrameTime();
+		}
+		if (IsKeyDown(KEY_S)) {
+			y_pos -= 600 * GetFrameTime();
+		}
+		if (IsKeyDown(KEY_A)) {
+			x_pos += 600 * GetFrameTime();
+		}
+		if (IsKeyDown(KEY_D)) {
+			x_pos -= 600 * GetFrameTime();
+		}
+		if (GetMouseWheelMoveV().y != 0) {
+			double old_tile_size = tile_size;
+			tile_size += GetMouseWheelMoveV().y * 3.0;
+			if (tile_size < 1.0) tile_size = 1.0;
+
+			double actual_delta = tile_size - old_tile_size;
+			x_pos -= (actual_delta / old_tile_size) * (GetMousePosition().x - x_pos);
+			y_pos -= (actual_delta / old_tile_size) * (GetMousePosition().y - y_pos);
+		}
+		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+			Vector2 tile_sel = { get_mouse_tile(x_pos, y_pos, tile_size).x, get_mouse_tile(x_pos, y_pos, tile_size).y };
+			int tile_sel_index = (int)tile_sel.y * WORLD_WIDTH + (int)tile_sel.x;
+
+			game_world.tiles[tile_sel_index].type = 7;
+		}
+		if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+			Vector2 tile_sel = { get_mouse_tile(x_pos, y_pos, tile_size).x, get_mouse_tile(x_pos, y_pos, tile_size).y };
+			int tile_sel_index = (int)tile_sel.y * WORLD_WIDTH + (int)tile_sel.x;
+
+			game_world.tiles[tile_sel_index].type = 0;
+		}
+
+		BeginDrawing();
+		ClearBackground((Color) { 25, 25, 50, 255 });
+		time_passed += GetFrameTime();
+		if (time_passed > 1.0 / fps) {
+			time_passed -= 1.0 / fps;
+			update_world();
+			draw_screen(x_pos, y_pos, tile_size);
+		}
+		UpdateTexture(world_texture, world_pixels);
+		DrawTexturePro(world_texture, (Rectangle) { 0, 0, WORLD_WIDTH, WORLD_HEIGHT }, (Rectangle) { x_pos, y_pos, WORLD_WIDTH * tile_size, WORLD_HEIGHT * tile_size}, (Vector2) { 0, 0 }, 0.0f, WHITE);
 
 		draw_ui(current_screen_width, current_screen_height, fps);
 		if (debug == true) {
