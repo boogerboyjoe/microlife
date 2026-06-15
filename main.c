@@ -421,6 +421,7 @@ void draw_ui(int current_screen_width, int current_screen_height, double fps) {
 int main(void) {
 	double time_passed = 0;
 	double tile_size = 4.0;
+	int brush_size = 0;
 	double x_pos = 0.0;
 	double y_pos = 0.0;
 
@@ -469,21 +470,21 @@ int main(void) {
 		}
 
 		if (IsKeyDown(KEY_W)) {
-			y_pos += 6;
+			y_pos += 600 * GetFrameTime();
 		}
 		if (IsKeyDown(KEY_S)) {
-			y_pos -= 6;
+			y_pos -= 600 * GetFrameTime();
 		}
 		if (IsKeyDown(KEY_A)) {
-			x_pos += 6;
+			x_pos += 600 * GetFrameTime();
 		}
 		if (IsKeyDown(KEY_D)) {
-			x_pos -= 6;
+			x_pos -= 600 * GetFrameTime();
 		}
 		if (GetMouseWheelMoveV().y != 0) {
 			double old_tile_size = tile_size;
 			tile_size += GetMouseWheelMoveV().y * 3.0;
-			if (tile_size < 4.0) tile_size = 4.0;
+			if (tile_size < 1.0) tile_size = 1.0;
 
 			double actual_delta = tile_size - old_tile_size;
 			x_pos -= (actual_delta / old_tile_size) * (GetMousePosition().x - x_pos);
